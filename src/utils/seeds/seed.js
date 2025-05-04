@@ -1,13 +1,13 @@
-/* Semilla de datos de videojuegos y desarrolladores */
+/* Semilla de datos de libros y autores */
 
 const mongoose = require('mongoose')
-const { Videogame } = require('../../api/models/videogame')
-const videogameCollectionName = Videogame.collection.name
-const { Developer } = require('../../api/models/developer')
-const developerCollectionName = Developer.collection.name
+const { Book } = require('../../api/models/book')
+const bookCollectionName = Book.collection.name
+const { Author } = require('../../api/models/author')
+const authorCollectionName = Author.collection.name
 const { validation } = require('../validations/validation')
 
-// Crea los videojuegos y los desarrolladores en ambas colecciones
+// Crea los libros y los autores en ambas colecciones
 const createData = async () => {
   // Permite cargar variables de entorno desde un archivo ".env"
   require('dotenv').config()
@@ -16,7 +16,7 @@ const createData = async () => {
 
   try {
     console.log(
-      `Se van a generar los datos en la colecciones "${videogameCollectionName}" y "${developerCollectionName}"`
+      `Se van a generar los datos en la colecciones "${bookCollectionName}" y "${authorCollectionName}"`
     )
 
     await mongoose.connect(dbUrl)
@@ -24,85 +24,80 @@ const createData = async () => {
       `Conexión con la Base de Datos "${dbName}" realizada correctamente`
     )
 
-    await Developer.collection.drop()
+    await Author.collection.drop()
     console.log(
-      `Se han eliminado los datos antiguos en la colección "${developerCollectionName}"`
+      `Se han eliminado los datos antiguos en la colección "${authorCollectionName}"`
     )
 
-    await Videogame.collection.drop()
+    await Book.collection.drop()
     console.log(
-      `Se han eliminado los datos antiguos en la colección "${videogameCollectionName}"`
+      `Se han eliminado los datos antiguos en la colección "${bookCollectionName}"`
     )
 
     try {
-      const { videogames } = require('../../data/videogame')
-      await Videogame.insertMany(videogames)
+      const { books } = require('../../data/book')
+      await Book.insertMany(books)
       console.log(
-        `Se han creado los nuevos datos en la colección "${videogameCollectionName}"`
+        `Se han creado los nuevos datos en la colección "${bookCollectionName}"`
       )
     } catch (error) {
       throw new Error(
-        `Se ha producido un error durante la carga de los datos en la colección "${videogameCollectionName}":${validation.CONSOLE_LINE_BREAK}${error}`
+        `Se ha producido un error durante la carga de los datos en la colección "${bookCollectionName}":${validation.CONSOLE_LINE_BREAK}${error}`
       )
     }
 
     try {
-      const { developers } = require('../../data/developer')
+      const { authors } = require('../../data/author')
 
-      // Los datos de cada desarrollador hacen referencia al título de sus videojuegos
-      // Se hace la búsqueda por título de cada videoujego y se asocia su identificador al desarrollador
-      for (const developer of developers) {
-        if (developer.videogames.length > 0) {
-          developer.videogames = await Promise.all(
-            validation
-              .normalizeArray(developer.videogames)
-              .map(async (title) => {
-                const videogame = await Videogame.findOne({
-                  title: validation.normalizeString(title)
-                })
-
-                return videogame != null ? videogame._id : null
+      // Los datos de cada autor hacen referencia al título de sus libros
+      // Se hace la búsqueda por título de cada libro y se asocia su identificador al autor
+      for (const author of authors) {
+        if (author.books.length > 0) {
+          author.books = await Promise.all(
+            validation.normalizeArray(author.books).map(async (title) => {
+              const book = await Book.findOne({
+                title: validation.normalizeString(title)
               })
+
+              return book != null ? book._id : null
+            })
           )
 
-          // Se comprueba si algún videojuego no existe en la colección
-          if (developer.videogames.filter((id) => id == null).length > 0) {
+          // Se comprueba si algún libro no existe en la colección
+          if (author.books.some((id) => id == null)) {
             throw new Error(
-              validation.getVideogameDoesNotExistMsg(videogameCollectionName)
+              validation.getBookDoesNotExistMsg(bookCollectionName)
             )
           }
         } else {
-          developer.videogames = []
+          author.books = []
         }
       }
 
-      // Se eliminan los posibles duplicados del array de videojuegos de cada desarrollador y se concatenan en un mismo array
-      const videogames = developers.reduce(
-        (acc, developer) =>
-          acc.concat(validation.removeDuplicates(developer.videogames)),
+      // Se eliminan los posibles duplicados del array de libros de cada autor y se concatenan en un mismo array
+      const books = authors.reduce(
+        (acc, author) => acc.concat(validation.removeDuplicates(author.books)),
         []
       )
 
-      // Se comprueba si algún videojuego ya pertenece a otro desarrollador (eliminando los posibles duplicados del array resultante anterior)
-      // Al no existir ningún desarrollador (ya que se insertan todos a la vez con "insertMany"), no se puede comprobar en la validación del modelo
-      if (
-        videogames.length !== validation.removeDuplicates(videogames).length
-      ) {
+      // Se comprueba si algún libro ya pertenece a otro autor (eliminando los posibles duplicados del array resultante anterior)
+      // Al no existir ningún autor (ya que se insertan todos a la vez con "insertMany"), no se puede comprobar en la validación del modelo
+      if (books.length !== validation.removeDuplicates(books).length) {
         throw new Error(
-          validation.getVideogameWithDevMsg(
-            developerCollectionName,
+          validation.getBookWithAuthorMsg(
+            authorCollectionName,
             validation.CONSOLE_LINE_BREAK
           )
         )
       }
 
-      await Developer.insertMany(developers)
+      await Author.insertMany(authors)
       console.log(
-        `Se han creado los nuevos datos en la colección "${developerCollectionName}"`
+        `Se han creado los nuevos datos en la colección "${authorCollectionName}"`
       )
     } catch (error) {
       throw new Error(
-        `Se ha producido un error durante la carga de los datos en la colección "${developerCollectionName}":${validation.CONSOLE_LINE_BREAK}${error}`
+        `Se ha producido un error durante la carga de los datos en la colección "${authorCollectionName}":${validation.CONSOLE_LINE_BREAK}${error}`
       )
     }
   } catch (error) {

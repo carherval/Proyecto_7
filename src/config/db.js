@@ -2,7 +2,7 @@
 
 const { validation } = require('../utils/validations/validation')
 
-// Realiza la conexión con la Base de Datos "videogames"
+// Realiza la conexión con la Base de Datos "library"
 const connectToDataBase = async () => {
   // Permite cargar variables de entorno desde un archivo ".env"
   require('dotenv').config()

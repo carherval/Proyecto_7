@@ -1,22 +1,24 @@
 const express = require('express')
-const videogames = express()
+const library = express()
 const { connectToDataBase } = require('./src/config/db')
-const { videogameRouter } = require('./src/api/routes/videogame')
-const { developerRouter } = require('./src/api/routes/developer')
+const { bookRouter } = require('./src/api/routes/book')
+const { authorRouter } = require('./src/api/routes/author')
+const { userRouter } = require('./src/api/routes/user')
 const { validation } = require('./src/utils/validations/validation')
 const PORT = 3000
 
 // Permite interpretar las solicitudes HTTP en formato JSON
-videogames.use(express.json())
+library.use(express.json())
 // Permite interpretar las solicitudes HTTP a través del "req.body" de las rutas
-videogames.use(express.urlencoded({ extended: false }))
+library.use(express.urlencoded({ extended: false }))
 
 // Se definen las rutas de las colecciones
-videogames.use('/videogame', videogameRouter)
-videogames.use('/developer', developerRouter)
+library.use('/book', bookRouter)
+library.use('/author', authorRouter)
+library.use('/user', userRouter)
 
 // Gestión de ruta no encontrada
-videogames.use('*', (req, res, next) => {
+library.use((req, res, next) => {
   const error = new Error(
     `Ruta no encontrada${validation.LINE_BREAK}Comprueba la URL y sus parámetros`
   )
@@ -25,7 +27,7 @@ videogames.use('*', (req, res, next) => {
 })
 
 // Gestión de errores
-videogames.use((error, req, res, next) => {
+library.use((error, req, res, next) => {
   console.log(
     `Error ${error.status}: ${error.message.replaceAll(
       validation.LINE_BREAK,
@@ -36,7 +38,7 @@ videogames.use((error, req, res, next) => {
   return res.status(error.status).send(error.message)
 })
 
-videogames.listen(PORT, () => {
+library.listen(PORT, () => {
   console.log(`Servidor express ejecutándose en "http://localhost:${PORT}"`)
   connectToDataBase()
 })
