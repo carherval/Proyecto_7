@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const { Book } = require('../models/book')
 const bookCollectionName = Book.collection.name
 const { Author } = require('../models/author')
-const { validation } = require('../../utils/validations/validation')
+const { validation } = require('../../utils/validation')
 const moment = require('moment')
 
 const getBookNotFoundByIdMsg = (id) => {
@@ -35,7 +35,7 @@ const getBooksWithAuthor = async (books) => {
 
 // Devuelve todos los libros ordenados alfabéticamente por título
 // Se añade a la información el nombre del autor del libro
-const getBooks = async (req, res, next) => {
+const getAllBooks = async (req, res, next) => {
   try {
     const books = (await getBooksWithAuthor(await Book.find())).sort(
       validation.sortBooks
@@ -177,20 +177,21 @@ const getBooksByIsbn = async (req, res, next) => {
   }
 }
 
-// Devuelve los libros filtrados por nombre o apellidos del autor y ordenados alfabéticamente por título
+// Devuelve los libros filtrados por apellidos o nombre del autor y ordenados alfabéticamente por título
 // Se añade a la información el nombre del autor del libro
 const getBooksByAuthorName = async (req, res, next) => {
   const name = validation.getIgnoreAccentCaseText(
     validation.normalizeString(req.params.name)
   )
-  const BOOKS_NOT_FOUND_BY_AUTHOR_NAME_MSG = `No se han encontrado libros en la colección "${bookCollectionName}" cuyo autor contenga en el nombre o en los apellidos "${validation.normalizeSearchString(
+  const BOOKS_NOT_FOUND_BY_AUTHOR_NAME_MSG = `No se han encontrado libros en la colección "${bookCollectionName}" cuyo autor contenga en los apellidos o en el nombre "${validation.normalizeSearchString(
     name
   )}"`
 
   try {
     const authors = await Author.find({
-      $or: [{ name }, { surnames: name }]
+      $or: [{ surnames: name }, { name }]
     }).populate('books')
+
     if (authors.length > 0) {
       const books = (
         await getBooksWithAuthor(
@@ -207,7 +208,7 @@ const getBooksByAuthorName = async (req, res, next) => {
       return res.status(404).send(BOOKS_NOT_FOUND_BY_AUTHOR_NAME_MSG)
     }
   } catch (error) {
-    error.message = `Se ha producido un error al consultar en la colección "${bookCollectionName}" los libros cuyo autor contenga en el nombre o en los apellidos "${validation.normalizeSearchString(
+    error.message = `Se ha producido un error al consultar en la colección "${bookCollectionName}" los libros cuyo autor contenga en los apellidos o en el nombre "${validation.normalizeSearchString(
       name
     )}":${validation.LINE_BREAK}${error.message}`
     error.status = 500
@@ -231,7 +232,7 @@ const createBook = async (req, res, next) => {
 }
 
 // Actualiza un libro existente mediante su identificador
-const updateBook = async (req, res, next) => {
+const updateBookById = async (req, res, next) => {
   const { id } = req.params
 
   try {
@@ -240,6 +241,7 @@ const updateBook = async (req, res, next) => {
     }
 
     const book = await Book.findById(id)
+
     if (book == null) {
       throw new Error(getBookNotFoundByIdMsg(id))
     }
@@ -255,6 +257,7 @@ const updateBook = async (req, res, next) => {
 
     const { title, genre, isbn, publicationDate, numCopies, abstract } =
       req.body
+
     updatedBook.title = title ?? updatedBook.title
     updatedBook.genre = genre ?? updatedBook.genre
     updatedBook.isbn = isbn ?? updatedBook.isbn
@@ -277,7 +280,7 @@ const updateBook = async (req, res, next) => {
 // Elimina un libro existente mediante su identificador
 // Si un autor tiene relacionado el libro eliminado, se elimina de la lista de libros de su autor
 // Se usa una sesión y una transacción para almacenar varias operaciones
-const deleteBook = async (req, res, next) => {
+const deleteBookById = async (req, res, next) => {
   const { id } = req.params
   // Inicio de la sesión
   const session = await mongoose.startSession()
@@ -291,13 +294,14 @@ const deleteBook = async (req, res, next) => {
     }
 
     const book = await Book.findById(id)
+
     if (book == null) {
       throw new Error(getBookNotFoundByIdMsg(id))
     }
 
     const { User } = require('../models/user')
-    const users = await User.find({ books: { $in: id } })
-    if (users.length > 0) {
+
+    if ((await User.find({ books: { $in: id } })).length > 0) {
       throw new Error(
         `El libro no se puede eliminar porque está siendo actualmente prestado a los usuarios en la colección "${User.collection.name}"`
       )
@@ -350,15 +354,15 @@ const deleteBook = async (req, res, next) => {
 }
 
 const bookController = {
-  getBooks,
+  getAllBooks,
   getBookById,
   getBooksByTitle,
   getBooksByGenre,
   getBooksByIsbn,
   getBooksByAuthorName,
   createBook,
-  updateBook,
-  deleteBook
+  updateBookById,
+  deleteBookById
 }
 
 module.exports = { bookController }

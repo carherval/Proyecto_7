@@ -1,7 +1,5 @@
 /* Funcionalidades para la configuración de la Base de Datos */
 
-const { validation } = require('../utils/validations/validation')
-
 // Realiza la conexión con la Base de Datos "library"
 const connectToDataBase = async () => {
   // Permite cargar variables de entorno desde un archivo ".env"
@@ -18,6 +16,8 @@ const connectToDataBase = async () => {
       `Conexión con la Base de Datos "${dbName}" realizada correctamente`
     )
   } catch (error) {
+    const { validation } = require('../utils/validation')
+
     console.log(
       `Se ha producido un error al conectar con la Base de Datos "${dbName}":${validation.CONSOLE_LINE_BREAK}${error}`
     )

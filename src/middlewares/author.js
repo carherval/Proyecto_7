@@ -1,18 +1,18 @@
 /* Middlewares de autores */
 
 const { authorSchema } = require('../api/models/author')
-const { validation } = require('../utils/validations/validation')
+const { validation } = require('../utils/validation')
 
 // Transformación de los datos de los autores antes de su validación
 const preValidateAuthor = authorSchema.pre('validate', function (next) {
   // Normalización de cadena
-  if (this.name != null) {
-    this.name = validation.normalizeString(this.name)
+  if (this.surnames != null) {
+    this.surnames = validation.normalizeString(this.surnames)
   }
 
   // Normalización de cadena
-  if (this.surnames != null) {
-    this.surnames = validation.normalizeString(this.surnames)
+  if (this.name != null) {
+    this.name = validation.normalizeString(this.name)
   }
 
   next()
@@ -28,15 +28,16 @@ const postValidateAuthor = authorSchema.post('validate', function () {
 
 // Validación de los datos de los autores antes de su guardado
 const preSaveAuthor = authorSchema.pre('save', async function (next) {
-  // Validación de nombre y apellidos únicos
+  // Validación de apellidos y nombre únicos
   const { Author } = require('../api/models/author')
   const author = await Author.findOne({
-    name: validation.normalizeString(this.name),
-    surnames: validation.normalizeString(this.surnames)
+    surnames: validation.normalizeString(this.surnames),
+    name: validation.normalizeString(this.name)
   })
+
   // No hay que tener en cuenta el identificador del propio autor
   if (author != null && author._id.toJSON() !== this._id.toJSON()) {
-    return next(new Error(`name + surnames: ${validation.UNIQUE_MSG}`))
+    return next(new Error(`surnames + name: ${validation.UNIQUE_MSG}`))
   }
 
   next()

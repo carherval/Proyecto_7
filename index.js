@@ -1,11 +1,12 @@
+const PORT = 3000
+
 const express = require('express')
 const library = express()
-const { connectToDataBase } = require('./src/config/db')
 const { bookRouter } = require('./src/api/routes/book')
 const { authorRouter } = require('./src/api/routes/author')
 const { userRouter } = require('./src/api/routes/user')
-const { validation } = require('./src/utils/validations/validation')
-const PORT = 3000
+const { validation } = require('./src/utils/validation')
+const { connectToDataBase } = require('./src/config/db')
 
 // Permite interpretar las solicitudes HTTP en formato JSON
 library.use(express.json())
@@ -22,7 +23,9 @@ library.use((req, res, next) => {
   const error = new Error(
     `Ruta no encontrada${validation.LINE_BREAK}Comprueba la URL y sus parámetros`
   )
+
   error.status = 404
+
   next(error)
 })
 

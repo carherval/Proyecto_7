@@ -2,12 +2,10 @@
 
 const mongoose = require('mongoose')
 const {
-  BOOK_COLLECTION_NAME: bookCollectionName
-} = require('../../utils/validations/validation')
-const {
-  USER_COLLECTION_NAME: userCollectionName
-} = require('../../utils/validations/validation')
-const { validation } = require('../../utils/validations/validation')
+  BOOK_COLLECTION_NAME: bookCollectionName,
+  USER_COLLECTION_NAME: userCollectionName,
+  validation
+} = require('../../utils/validation')
 
 // Géneros
 const GENRES = {
@@ -88,7 +86,7 @@ const bookSchema = new mongoose.Schema(
           validator: validation.isValidNumCopies,
           message: validation.INVALID_NUM_COPIES_MSG
         },
-        // Valida si las copias del libro no son inferiores a las copias actualmente prestadas
+        // Valida si las copias del libro no son inferiores a las copias actualmente prestadas a los usuarios
         {
           validator: async function (numCopies) {
             const { User } = require('./user')

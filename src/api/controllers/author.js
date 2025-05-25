@@ -3,7 +3,7 @@
 const mongoose = require('mongoose')
 const { Author } = require('../models/author')
 const authorCollectionName = Author.collection.name
-const { validation } = require('../../utils/validations/validation')
+const { validation } = require('../../utils/validation')
 
 const getAuthorNotFoundByIdMsg = (id) => {
   return `No se ha encontrado ningún autor en la colección "${authorCollectionName}" con el identificador "${id}"`
@@ -17,13 +17,13 @@ const getAuthorByBookIdValidator = async (id) => {
 
 // Devuelve todos los autores ordenados alfabéticamente por apellidos y nombre
 // Se pueblan los libros con su título y ordenados alfabéticamente por título
-const getAuthors = async (req, res, next) => {
+const getAllAuthors = async (req, res, next) => {
   try {
-    const authors = (
-      await validation.getDocumentsWithSortedBooks(
+    const authors = validation
+      .getDocumentsWithSortedBooks(
         await Author.find().populate('books', 'title')
       )
-    ).sort(validation.sortAuthors)
+      .sort(validation.sortAuthors)
 
     if (authors.length > 0) {
       return res.status(200).send(authors)
@@ -67,7 +67,7 @@ const getAuthorById = async (req, res, next) => {
   }
 }
 
-// Devuelve los autores filtrados por nombre o apellidos y ordenados alfabéticamente por apellidos y nombre
+// Devuelve los autores filtrados por apellidos o nombre y ordenados alfabéticamente por apellidos y nombre
 // Se pueblan los libros con su título y ordenados alfabéticamente por título
 const getAuthorsByName = async (req, res, next) => {
   const name = validation.getIgnoreAccentCaseText(
@@ -75,14 +75,14 @@ const getAuthorsByName = async (req, res, next) => {
   )
 
   try {
-    const authors = (
-      await validation.getDocumentsWithSortedBooks(
-        await Author.find({ $or: [{ name }, { surnames: name }] }).populate(
+    const authors = validation
+      .getDocumentsWithSortedBooks(
+        await Author.find({ $or: [{ surnames: name }, { name }] }).populate(
           'books',
           'title'
         )
       )
-    ).sort(validation.sortAuthors)
+      .sort(validation.sortAuthors)
 
     if (authors.length > 0) {
       return res.status(200).send(authors)
@@ -90,13 +90,13 @@ const getAuthorsByName = async (req, res, next) => {
       return res
         .status(404)
         .send(
-          `No se han encontrado autores en la colección "${authorCollectionName}" cuyo nombre o apellidos contenga "${validation.normalizeSearchString(
+          `No se han encontrado autores en la colección "${authorCollectionName}" cuyos apellidos o nombre contengan "${validation.normalizeSearchString(
             name
           )}"`
         )
     }
   } catch (error) {
-    error.message = `Se ha producido un error al consultar en la colección "${authorCollectionName}" los autores cuyo nombre o apellidos contenga "${validation.normalizeSearchString(
+    error.message = `Se ha producido un error al consultar en la colección "${authorCollectionName}" los autores cuyos apellidos o nombre contengan "${validation.normalizeSearchString(
       name
     )}":${validation.LINE_BREAK}${error.message}`
     error.status = 500
@@ -114,7 +114,7 @@ const getAuthorByBookId = async (req, res, next) => {
       throw new Error(validation.INVALID_ID_MSG)
     }
 
-    const author = await validation.getDocumentWithSortedBooks(
+    const author = validation.getDocumentWithSortedBooks(
       await Author.findOne({ books: { $in: id } }).populate('books', 'title')
     )
 
@@ -134,7 +134,7 @@ const getAuthorByBookId = async (req, res, next) => {
   }
 }
 
-// Devuelve los autores filtrados por título de libro y ordenados alfabéticamente por nombre
+// Devuelve los autores filtrados por título de libro y ordenados alfabéticamente por apellidos y nombre
 // Se pueblan los libros con su título y ordenados alfabéticamente por título
 const getAuthorsByBookTitle = async (req, res, next) => {
   const title = validation.getIgnoreAccentCaseText(
@@ -142,11 +142,10 @@ const getAuthorsByBookTitle = async (req, res, next) => {
   )
 
   try {
-    const authors = (
-      await validation.getDocumentsWithSortedBooks(
+    const authors = validation
+      .getDocumentsWithSortedBooks(
         await Author.find().populate('books', 'title')
       )
-    )
       .filter((author) =>
         author.books.some((book) =>
           title.test(validation.getIgnoreAccentCaseText(book.title))
@@ -178,7 +177,7 @@ const getAuthorsByBookTitle = async (req, res, next) => {
 // Se pueblan los libros con su título y ordenados alfabéticamente por título
 const createAuthor = async (req, res, next) => {
   try {
-    // Se comprueba aquí y no en el middleware pre validate porque cualquier tratamiento omite el error de "cast" y toma por valor el array vacío
+    // Se comprueba aquí y no en el "middleware" "pre validate" porque cualquier tratamiento omite el error de "cast" y toma por valor el array vacío
     if (req.body.books != null) {
       req.body.books =
         req.body.books.length > 0
@@ -190,7 +189,7 @@ const createAuthor = async (req, res, next) => {
     return res
       .status(201)
       .send(
-        await validation.getDocumentWithSortedBooks(
+        validation.getDocumentWithSortedBooks(
           await Author.findById(
             (
               await new Author(req.body).save()
@@ -209,7 +208,7 @@ const createAuthor = async (req, res, next) => {
 
 // Actualiza un autor existente mediante su identificador
 // Se pueblan los libros con su título y ordenados alfabéticamente por título
-const updateAuthor = async (req, res, next) => {
+const updateAuthorById = async (req, res, next) => {
   const { id } = req.params
 
   try {
@@ -218,6 +217,7 @@ const updateAuthor = async (req, res, next) => {
     }
 
     const author = await Author.findById(id)
+
     if (author == null) {
       throw new Error(getAuthorNotFoundByIdMsg(id))
     }
@@ -231,12 +231,13 @@ const updateAuthor = async (req, res, next) => {
     // Se obtiene la información del autor a actualizar y se sustituye por la introducida por el usuario
     let updatedAuthor = new Author(author)
 
-    const { name, surnames, birthYear, books } = req.body
-    updatedAuthor.name = name ?? updatedAuthor.name
+    const { surnames, name, birthYear, books } = req.body
+
     updatedAuthor.surnames = surnames ?? updatedAuthor.surnames
+    updatedAuthor.name = name ?? updatedAuthor.name
     updatedAuthor.birthYear = birthYear ?? updatedAuthor.birthYear
 
-    // Se comprueba aquí y no en el middleware pre validate porque cualquier tratamiento omite el error de "cast" y toma por valor el array de libros almacenado anteriormente en el autor
+    // Se comprueba aquí y no en el "middleware" "pre validate" porque cualquier tratamiento omite el error de "cast" y toma por valor el array de libros almacenado anteriormente en el autor
     if (books != null) {
       updatedAuthor.books =
         books.length > 0 ? validation.normalizeArray(books) : []
@@ -246,7 +247,7 @@ const updateAuthor = async (req, res, next) => {
     return res
       .status(201)
       .send(
-        await validation.getDocumentWithSortedBooks(
+        validation.getDocumentWithSortedBooks(
           await Author.findById((await updatedAuthor.save())._id).populate(
             'books',
             'title'
@@ -263,7 +264,7 @@ const updateAuthor = async (req, res, next) => {
 }
 
 // Elimina un autor existente mediante su identificador
-const deleteAuthor = async (req, res, next) => {
+const deleteAuthorById = async (req, res, next) => {
   const { id } = req.params
 
   try {
@@ -272,6 +273,7 @@ const deleteAuthor = async (req, res, next) => {
     }
 
     const author = await Author.findById(id)
+
     if (author == null) {
       throw new Error(getAuthorNotFoundByIdMsg(id))
     }
@@ -291,14 +293,14 @@ const deleteAuthor = async (req, res, next) => {
 }
 
 const authorController = {
-  getAuthors,
+  getAllAuthors,
   getAuthorById,
   getAuthorsByName,
   getAuthorByBookId,
   getAuthorsByBookTitle,
   createAuthor,
-  updateAuthor,
-  deleteAuthor
+  updateAuthorById,
+  deleteAuthorById
 }
 
 module.exports = { getAuthorByBookIdValidator, authorController }

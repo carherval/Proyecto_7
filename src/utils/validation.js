@@ -1,14 +1,14 @@
 /* Funcionalidades para validación */
 
-const moment = require('moment')
-
 const BOOK_COLLECTION_NAME = 'book'
 const AUTHOR_COLLECTION_NAME = 'author'
 const USER_COLLECTION_NAME = 'user'
 
 const MIN_YEAR = 1500
 const MAX_NUM_COPIES = 5
+const PASSWORD_MIN_LENGTH = 8
 
+const ADMIN_USER_NAME = 'admin'
 const MANDATORY_MSG = 'El campo es obligatorio y no puede estar vacío'
 const UNIQUE_MSG = 'El campo no puede estar repetido'
 const ALLOWED_VALUES_MSG = 'Valores válidos'
@@ -19,10 +19,17 @@ const INVALID_DATE_MSG = 'Fecha no válida'
 const INVALID_ISBN_MSG = 'ISBN no válido'
 const INVALID_NUMBER_MSG = 'Número no válido'
 const INVALID_NUM_COPIES_MSG = `El número de copias no debe ser superior a ${MAX_NUM_COPIES}`
+const INVALID_PASSWORD_MSG = `La contraseña tiene que estar formada por letras y números y tener una longitud mínima de ${PASSWORD_MIN_LENGTH}`
 const INVALID_EMAIL_MSG = 'Correo electrónico no válido'
 const INVALID_ID_MSG = 'Identificador no válido'
 const LINE_BREAK = '<br /><br />'
 const CONSOLE_LINE_BREAK = '\n'
+
+const getLoginMsg = (role = '') => {
+  return `Se debe iniciar sesión${
+    role !== '' ? ` como "${role}"` : ''
+  } para poder acceder al "endpoint"`
+}
 
 const getBookDoesNotExistMsg = (collectionName) => {
   return `Alguno de los libros no existe en la colección "${collectionName}"`
@@ -108,6 +115,11 @@ const isValidNumCopies = (numCopies) => {
   return numCopies <= MAX_NUM_COPIES
 }
 
+// Devuelve si una contraseña es válida
+const isPassword = (password) => {
+  return new RegExp(`^[a-zñA-ZÑ\\d]{${PASSWORD_MIN_LENGTH},}$`).test(password)
+}
+
 // Devuelve si un correo electrónico es válido
 const isEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -143,7 +155,7 @@ const sortUsers = (user1, user2) => {
 
 // Devuelve si los libros del array existen en la colección
 const booksExistInCollection = async (books) => {
-  const { Book } = require('../../api/models/book')
+  const { Book } = require('../api/models/book')
 
   for (const id of books) {
     if ((await Book.findById(id)) == null) {
@@ -157,8 +169,9 @@ const booksExistInCollection = async (books) => {
 // Devuelve un documento con su lista de libros ordenados alfabéticamente por título y las fechas formateadas
 const getDocumentWithSortedBooks = (document) => {
   if (document != null) {
-    document.books.sort(sortBooks)
+    const moment = require('moment')
 
+    document.books.sort(sortBooks)
     document = document.toObject()
     document.createdAt = moment(document.createdAt).format(
       'DD/MM/YYYY HH:mm:ss'
@@ -228,6 +241,10 @@ const formatErrorMsg = (msg) => {
 }
 
 const validation = {
+  MIN_YEAR,
+  MAX_NUM_COPIES,
+  PASSWORD_MIN_LENGTH,
+  ADMIN_USER_NAME,
   MANDATORY_MSG,
   UNIQUE_MSG,
   ALLOWED_VALUES_MSG,
@@ -238,10 +255,12 @@ const validation = {
   INVALID_ISBN_MSG,
   INVALID_NUMBER_MSG,
   INVALID_NUM_COPIES_MSG,
+  INVALID_PASSWORD_MSG,
   INVALID_EMAIL_MSG,
   INVALID_ID_MSG,
   LINE_BREAK,
   CONSOLE_LINE_BREAK,
+  getLoginMsg,
   getBookDoesNotExistMsg,
   getBookWithAuthorMsg,
   getCopiesLessThanBorrowingsMsg,
@@ -256,6 +275,7 @@ const validation = {
   isIsbn,
   isNumber,
   isValidNumCopies,
+  isPassword,
   isEmail,
   getObjectValues,
   sortBooks,

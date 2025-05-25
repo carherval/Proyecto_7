@@ -1,11 +1,11 @@
 /* Semilla de datos de libros y autores */
 
 const mongoose = require('mongoose')
-const { Book } = require('../../api/models/book')
+const { Book } = require('../api/models/book')
 const bookCollectionName = Book.collection.name
-const { Author } = require('../../api/models/author')
+const { Author } = require('../api/models/author')
 const authorCollectionName = Author.collection.name
-const { validation } = require('../validations/validation')
+const { validation } = require('./validation')
 
 // Crea los libros y los autores en ambas colecciones
 const createData = async () => {
@@ -34,8 +34,31 @@ const createData = async () => {
       `Se han eliminado los datos antiguos en la colección "${bookCollectionName}"`
     )
 
+    const { User } = require('../api/models/user')
+    const userCollectionName = User.collection.name
+
     try {
-      const { books } = require('../../data/book')
+      // Es necesario leer el campo oculto de la contraseña
+      const users = await User.find().select('+password')
+
+      for (const user of users) {
+        user.books = []
+        // Se actualiza el usuario
+        await new User(user).save()
+      }
+
+      console.log(
+        `Se han eliminado los libros prestados a los usuarios en la colección "${userCollectionName}"`
+      )
+    } catch (error) {
+      throw new Error(
+        `Se ha producido un error durante la eliminación de los libros prestados a los usuarios en la colección "${userCollectionName}":${validation.CONSOLE_LINE_BREAK}${error}`
+      )
+    }
+
+    try {
+      const { books } = require('../data/book')
+
       await Book.insertMany(books)
       console.log(
         `Se han creado los nuevos datos en la colección "${bookCollectionName}"`
@@ -47,7 +70,7 @@ const createData = async () => {
     }
 
     try {
-      const { authors } = require('../../data/author')
+      const { authors } = require('../data/author')
 
       // Los datos de cada autor hacen referencia al título de sus libros
       // Se hace la búsqueda por título de cada libro y se asocia su identificador al autor

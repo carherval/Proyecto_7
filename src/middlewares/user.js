@@ -1,7 +1,7 @@
 /* Middlewares de usuarios */
 
 const { userSchema } = require('../api/models/user')
-const { validation } = require('../utils/validations/validation')
+const { validation } = require('../utils/validation')
 
 // Transformación de los datos de los usuarios antes de su validación
 const preValidateUser = userSchema.pre('validate', function (next) {
@@ -11,8 +11,8 @@ const preValidateUser = userSchema.pre('validate', function (next) {
   }
 
   // Normalización de cadena
-  if (this.rol != null) {
-    this.rol = validation.normalizeString(this.rol)
+  if (this.role != null) {
+    this.role = validation.normalizeString(this.role)
   }
 
   next()
@@ -26,4 +26,7 @@ const postValidateUser = userSchema.post('validate', function () {
   }
 })
 
-module.exports = { preValidateUser, postValidateUser }
+module.exports = {
+  preValidateUser,
+  postValidateUser
+}

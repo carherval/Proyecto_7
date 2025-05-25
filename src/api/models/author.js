@@ -2,22 +2,20 @@
 
 const mongoose = require('mongoose')
 const {
-  BOOK_COLLECTION_NAME: bookCollectionName
-} = require('../../utils/validations/validation')
-const {
-  AUTHOR_COLLECTION_NAME: authorCollectionName
-} = require('../../utils/validations/validation')
-const { validation } = require('../../utils/validations/validation')
+  BOOK_COLLECTION_NAME: bookCollectionName,
+  AUTHOR_COLLECTION_NAME: authorCollectionName,
+  validation
+} = require('../../utils/validation')
 
 // Esquema
 const authorSchema = new mongoose.Schema(
   {
-    name: {
+    surnames: {
       type: String,
       trim: true,
       required: [true, validation.MANDATORY_MSG]
     },
-    surnames: {
+    name: {
       type: String,
       trim: true,
       required: [true, validation.MANDATORY_MSG]

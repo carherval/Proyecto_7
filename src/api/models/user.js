@@ -2,12 +2,10 @@
 
 const mongoose = require('mongoose')
 const {
-  BOOK_COLLECTION_NAME: bookCollectionName
-} = require('../../utils/validations/validation')
-const {
-  USER_COLLECTION_NAME: userCollectionName
-} = require('../../utils/validations/validation')
-const { validation } = require('../../utils/validations/validation')
+  BOOK_COLLECTION_NAME: bookCollectionName,
+  USER_COLLECTION_NAME: userCollectionName,
+  validation
+} = require('../../utils/validation')
 
 // Roles
 const ROLES = {
@@ -24,19 +22,23 @@ const userSchema = new mongoose.Schema(
       required: [true, validation.MANDATORY_MSG],
       unique: [true, `userName: ${validation.UNIQUE_MSG}`]
     },
+    password: {
+      type: String,
+      trim: true,
+      required: [true, validation.MANDATORY_MSG],
+      select: false
+    },
     email: {
       type: String,
       trim: true,
       required: [true, validation.MANDATORY_MSG],
-      validate: [
-        {
-          validator: validation.isEmail,
-          message: validation.INVALID_EMAIL_MSG
-        }
-      ],
+      validate: {
+        validator: validation.isEmail,
+        message: validation.INVALID_EMAIL_MSG
+      },
       unique: [true, `email: ${validation.UNIQUE_MSG}`]
     },
-    rol: {
+    role: {
       type: String,
       trim: true,
       required: [true, validation.MANDATORY_MSG],
@@ -56,7 +58,7 @@ const userSchema = new mongoose.Schema(
           validator: validation.booksExistInCollection,
           message: validation.getBookDoesNotExistMsg(bookCollectionName)
         },
-        // Valida si los libros del array pueden ser prestados en función de las copias del libro y de sus copias actualmente prestadas
+        // Valida si los libros del array pueden ser prestados en función de las copias del libro y de sus copias actualmente prestadas a los usuarios
         {
           validator: async function (books) {
             const { Book } = require('./book')
@@ -66,7 +68,7 @@ const userSchema = new mongoose.Schema(
               const book = await Book.findById(id)
               const users = await getUsersByBookIdValidator(id)
 
-              // Para poder prestar un libro, tiene que haber alguna copia del mismo que no está siendo actualmente prestada
+              // Para poder prestar un libro, tiene que haber alguna copia del mismo que no está siendo actualmente prestada a los usuarios
               // No hay que tener en cuenta el identificador del propio usuario
               if (
                 book != null &&
@@ -101,4 +103,4 @@ postValidateUser
 // Si no se especifica, por defecto, la colección es el plural del modelo
 const User = mongoose.model(userCollectionName, userSchema, userCollectionName)
 
-module.exports = { User }
+module.exports = { ROLES, User }

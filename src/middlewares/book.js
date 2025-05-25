@@ -1,7 +1,7 @@
 /* Middlewares de libros */
 
 const { bookSchema } = require('../api/models/book')
-const { validation } = require('../utils/validations/validation')
+const { validation } = require('../utils/validation')
 
 // Transformación de los datos de los libros antes de su validación
 const preValidateBook = bookSchema.pre('validate', function (next) {
