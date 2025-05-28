@@ -265,7 +265,7 @@ const loginUser = async (req, res, next) => {
 // Se pueblan los libros prestados con su título y ordenados alfabéticamente por título
 const createUser = async (req, res, next) => {
   try {
-    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" de la encriptación de la contraseña, no la contraseña
+    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" del cifrado de la contraseña, no la contraseña
     if (
       req.body.password != null &&
       !validation.isPassword(req.body.password)
@@ -279,8 +279,8 @@ const createUser = async (req, res, next) => {
       )
     }
 
-    // Encriptación de la contraseña
-    // Se hace aquí y no en el "middleware" "pre save" para evitar que se encripte siempre aunque no se actualice
+    // Cifrado de la contraseña
+    // Se hace aquí y no en el "middleware" "pre save" para evitar que se cifre siempre aunque no se actualice
     if (req.body.password != null) {
       req.body.password = bcrypt.hashSync(req.body.password, 10)
     }
@@ -329,7 +329,7 @@ const updateUser = async (req, res, next) => {
 
     const { userName, password, email, role, books } = req.body
 
-    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" de la encriptación de la contraseña, no la contraseña
+    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" del cifrado de la contraseña, no la contraseña
     if (password != null && !validation.isPassword(password)) {
       throw new Error(validation.INVALID_PASSWORD_MSG)
     }
@@ -341,8 +341,8 @@ const updateUser = async (req, res, next) => {
     }
 
     updatedUser.userName = userName ?? updatedUser.userName
-    // Encriptación de la contraseña
-    // Se hace aquí y no en el "middleware" "pre save" para evitar que se encripte siempre aunque no se actualice
+    // Cifrado de la contraseña
+    // Se hace aquí y no en el "middleware" "pre save" para evitar que se cifre siempre aunque no se actualice
     updatedUser.password =
       password != null ? bcrypt.hashSync(password, 10) : updatedUser.password
     updatedUser.email = email ?? updatedUser.email
@@ -402,14 +402,14 @@ const updateUserById = async (req, res, next) => {
 
     const { userName, password, email, role, books } = req.body
 
-    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" de la encriptación de la contraseña, no la contraseña
+    // Se valida aquí y no en el "validate" del modelo porque, si no, en el modelo se validaría el "hash" del cifrado de la contraseña, no la contraseña
     if (password != null && !validation.isPassword(password)) {
       throw new Error(validation.INVALID_PASSWORD_MSG)
     }
 
     updatedUser.userName = userName ?? updatedUser.userName
-    // Encriptación de la contraseña
-    // Se hace aquí y no en el "middleware" "pre save" para evitar que se encripte siempre aunque no se actualice
+    // Cifrado de la contraseña
+    // Se hace aquí y no en el "middleware" "pre save" para evitar que se cifre siempre aunque no se actualice
     updatedUser.password =
       password != null ? bcrypt.hashSync(password, 10) : updatedUser.password
     updatedUser.email = email ?? updatedUser.email
