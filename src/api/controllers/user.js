@@ -7,6 +7,7 @@ const {
   BOOK_COLLECTION_NAME: bookCollectionName,
   validation
 } = require('../../utils/validation')
+// Permite cifrar contraseñas y verificar su autenticidad de forma segura
 const bcrypt = require('bcrypt')
 
 const getUserNotFoundByIdMsg = (id) => {

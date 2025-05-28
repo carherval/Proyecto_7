@@ -1,5 +1,6 @@
 /* Generación y validación de token para autorización de usuarios */
 
+// Permite crear, verificar y gestionar tokens "jwt" para autenticación y seguridad
 const jwt = require('jsonwebtoken')
 // Permite cargar variables de entorno desde un archivo ".env"
 require('dotenv').config()
