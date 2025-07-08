@@ -166,9 +166,11 @@ const getUsersByBookId = async (req, res, next) => {
       throw new Error(validation.INVALID_ID_MSG)
     }
 
-    const users = validation.getDocumentsWithSortedBooks(
-      await User.find({ books: { $in: id } }).populate('books', 'title')
-    )
+    const users = validation
+      .getDocumentsWithSortedBooks(
+        await User.find({ books: { $in: id } }).populate('books', 'title')
+      )
+      .sort(validation.sortUsers)
 
     if (users.length > 0) {
       return res.status(200).send(users)
@@ -280,7 +282,7 @@ const createUser = async (req, res, next) => {
     }
 
     // Cifrado de la contraseña
-    // Se hace aquí y no en el "middleware" "pre save" para evitar que se cifre siempre aunque no se actualice
+    // Al ser creación del usuario se podría hacer en el "middleware" "pre save" ya que siempre se tiene que cifrar
     if (req.body.password != null) {
       req.body.password = bcrypt.hashSync(req.body.password, 10)
     }
